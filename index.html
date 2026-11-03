@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gastos">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#0a7d6e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Meus Gastos</title>
+<style>
+:root{--bg:#eef2f1;--card:#ffffff;--ink:#12302f;--mut:#5d7472;--line:#d6e0de;--ac:#0a7d6e;--onac:#ffffff;--bad:#c4402f;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1716;--card:#172321;--ink:#e6f1ee;--mut:#8fa8a4;--line:#263733;--ac:#3fd0b0;--onac:#06231d;--bad:#ff8a78;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1716;--card:#172321;--ink:#e6f1ee;--mut:#8fa8a4;--line:#263733;--ac:#3fd0b0;--onac:#06231d;--bad:#ff8a78;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.4 "Avenir Next","Segoe UI",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+main{max-width:520px;margin:0 auto;padding:18px 16px 56px}
+button,input{font:inherit;color:inherit}
+.nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.nav h1{margin:0;font-size:1.25rem;text-transform:capitalize;letter-spacing:-.01em}
+.nav button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:1.3rem;cursor:pointer}
+.stats{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:8px;margin-bottom:16px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 10px;min-width:0}
+.stat.main{background:var(--ac);border-color:var(--ac);color:var(--onac)}
+.stat small{display:block;font-size:.78rem;opacity:.75;text-transform:capitalize}
+.stat b{display:block;font-size:1.05rem;margin-top:2px;overflow-wrap:anywhere}
+.stat.main b{font-size:1.2rem}
+form{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:10px;margin-bottom:22px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:grid;gap:4px;font-size:.82rem;color:var(--mut)}
+input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:1rem;color:var(--ink)}
+input:focus-visible,button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.add{background:var(--ac);color:var(--onac);border:0;border-radius:12px;padding:14px;font-weight:700;cursor:pointer}
+.day{display:flex;justify-content:space-between;color:var(--mut);font-size:.85rem;padding:14px 4px 6px;text-transform:capitalize}
+.day b{color:var(--ink)}
+.item{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 10px 10px 14px;margin-bottom:6px}
+.item span{flex:1;min-width:0;overflow-wrap:anywhere}
+.item .v{flex:none;font-weight:700}
+.item button{flex:none;width:34px;height:34px;border-radius:50%;border:0;background:transparent;color:var(--mut);font-size:1.1rem;cursor:pointer}
+.item button:hover{color:var(--bad)}
+.empty{color:var(--mut);text-align:center;padding:28px 8px}
+#note{background:var(--card);border:1px solid var(--bad);color:var(--bad);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:.88rem}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;display:flex;gap:12px;align-items:center;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap}
+#toast.show{opacity:1;pointer-events:auto}
+#toast button{background:none;border:0;font-weight:700;text-decoration:underline;cursor:pointer;color:inherit}
+.sync{font-size:.8rem;color:var(--mut);margin:-6px 0 12px;min-height:1.2em}
+.bk{display:flex;gap:10px;margin-top:30px}
+.bk button,.imp{flex:1;text-align:center;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px;cursor:pointer;color:var(--mut);font-size:.9rem}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <div class="nav">
+    <button id="prev" aria-label="Mês anterior">‹</button>
+    <h1 id="mlabel"></h1>
+    <button id="next" aria-label="Próximo mês">›</button>
+  </div>
+
+  <p id="note" hidden>Este navegador não está guardando os dados. Ao fechar a página, os gastos somem.</p>
+
+  <div class="stats">
+    <div class="stat"><small>Hoje</small><b id="sDay"></b></div>
+    <div class="stat main"><small id="lMonth"></small><b id="sMonth"></b></div>
+    <div class="stat"><small id="lYear"></small><b id="sYear"></b></div>
+  </div>
+
+  <form id="f" autocomplete="off">
+    <div class="two">
+      <label>Valor (R$)<input id="val" inputmode="decimal" placeholder="0,00" required></label>
+      <label>Data<input id="dt" type="date" required></label>
+    </div>
+    <label>Legenda<input id="leg" placeholder="Ex.: mercado, uber, almoço" maxlength="80"></label>
+    <button class="add" type="submit">Adicionar gasto</button>
+  </form>
+
+  <div id="list"></div>
+  <div class="bk">
+    <button id="exp" type="button">Exportar backup</button>
+    <label class="imp">Importar backup<input id="imp" type="file" accept="application/json,.json" hidden></label>
+  </div>
+</main>
+<div id="toast"><span id="tmsg"></span><button id="undo" type="button" hidden>Desfazer</button></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const brl = c => (c / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const KEY = 'gastos:v1';
+let items = [], view = new Date(), lastDel = null;
+view.setDate(1);
+
+function load() {
+  try { const r = JSON.parse(localStorage.getItem(KEY) || '[]'); items = Array.isArray(r) ? r : []; }
+  catch (e) { items = []; $('note').hidden = false; }
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(items)); }
+  catch (e) { $('note').hidden = false; }
+}
+const sum = p => items.filter(i => i.d.startsWith(p)).reduce((a, i) => a + i.v, 0);
+
+function toast(msg, undo) {
+  $('tmsg').textContent = msg; $('undo').hidden = !undo;
+  $('toast').classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => $('toast').classList.remove('show'), 4000);
+}
+
+function render() {
+  const vy = view.getFullYear(), vm = pad(view.getMonth() + 1);
+  $('mlabel').textContent = view.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  $('lMonth').textContent = view.toLocaleDateString('pt-BR', { month: 'long' });
+  $('lYear').textContent = vy;
+  $('sDay').textContent = brl(sum(ymd(new Date())));
+  $('sMonth').textContent = brl(sum(vy + '-' + vm));
+  $('sYear').textContent = brl(sum(String(vy)));
+
+  const list = $('list'); list.textContent = '';
+  const month = items.filter(i => i.d.startsWith(vy + '-' + vm))
+    .sort((a, b) => b.d.localeCompare(a.d) || b.id - a.id);
+  if (!month.length) {
+    const e = document.createElement('p'); e.className = 'empty';
+    e.textContent = 'Nenhum gasto neste mês. Adicione o primeiro acima.'; list.appendChild(e); return;
+  }
+  let cur = null;
+  for (const it of month) {
+    if (it.d !== cur) {
+      cur = it.d;
+      const [y, m, d] = it.d.split('-').map(Number);
+      const h = document.createElement('div'); h.className = 'day';
+      const a = document.createElement('span');
+      a.textContent = new Date(y, m - 1, d).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' });
+      const b = document.createElement('b'); b.textContent = brl(sum(it.d));
+      h.append(a, b); list.appendChild(h);
+    }
+    const row = document.createElement('div'); row.className = 'item';
+    const l = document.createElement('span'); l.textContent = it.l || 'Sem legenda';
+    const v = document.createElement('span'); v.className = 'v'; v.textContent = brl(it.v);
+    const x = document.createElement('button'); x.type = 'button'; x.textContent = '✕'; x.setAttribute('aria-label', 'Remover gasto');
+    x.onclick = () => {
+      lastDel = it; items = items.filter(z => z.id !== it.id); save(it.d.slice(0, 7)); render(); toast('Gasto removido', true);
+    };
+    row.append(l, v, x); list.appendChild(row);
+  }
+}
+
+function parseValue(s) {
+  s = s.trim().replace(/[^\d.,]/g, '');
+  s = s.includes(',') ? s.replace(/\./g, '').replace(',', '.') : s;
+  const n = parseFloat(s);
+  return isFinite(n) && n > 0 ? Math.round(n * 100) : null;
+}
+
+$('f').addEventListener('submit', e => {
+  e.preventDefault();
+  const v = parseValue($('val').value);
+  if (!v) { toast('Digite um valor maior que zero'); $('val').focus(); return; }
+  const d = $('dt').value || ymd(new Date());
+  items.push({ id: Date.now(), d, v, l: $('leg').value.trim() });
+  save(d.slice(0, 7));
+  const [y, m] = d.split('-').map(Number);
+  view = new Date(y, m - 1, 1);
+  $('val').value = ''; $('leg').value = ''; $('val').focus();
+  render(); toast('Gasto adicionado');
+});
+$('undo').onclick = () => {
+  if (!lastDel) return;
+  const k = lastDel.d.slice(0, 7); items.push(lastDel); lastDel = null; save(k); render(); $('toast').classList.remove('show');
+};
+$('prev').onclick = () => { view = new Date(view.getFullYear(), view.getMonth() - 1, 1); render(); };
+$('next').onclick = () => { view = new Date(view.getFullYear(), view.getMonth() + 1, 1); render(); };
+document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
+
+$('dt').value = ymd(new Date());
+load(); render();
+
+$('exp').onclick = async () => {
+  const name = 'gastos-' + ymd(new Date()) + '.json';
+  const blob = new Blob([JSON.stringify(items)], { type: 'application/json' });
+  const f = new File([blob], name, { type: 'application/json' });
+  if (navigator.canShare && navigator.canShare({ files: [f] })) {
+    try { await navigator.share({ files: [f] }); return; } catch (e) { if (e.name === 'AbortError') return; }
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+};
+$('imp').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const arr = JSON.parse(await f.text());
+    if (!Array.isArray(arr)) throw new Error('x');
+    const ids = new Set(items.map(i => i.id));
+    arr.forEach(i => { if (i && typeof i.d === 'string' && Number.isFinite(i.v) && !ids.has(i.id)) items.push({ id: i.id, d: i.d, v: i.v, l: String(i.l || '') }); });
+    save(); render(); toast('Backup importado');
+  } catch (err) { toast('Arquivo de backup inválido'); }
+  e.target.value = '';
+};
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
